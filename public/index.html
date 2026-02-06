@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -59,7 +60,7 @@
             transition: all 1s cubic-bezier(0.165, 0.84, 0.44, 1);
         }
 
-        .team-container > div {
+        .team-container>div {
             width: calc(50% - 10px);
             transition: all 1s cubic-bezier(0.165, 0.84, 0.44, 1);
         }
@@ -123,120 +124,125 @@
         .champion-image.loaded {
             opacity: 1;
         }
-
     </style>
 </head>
+
 <body>
-<div id="app" class="container">
-    <h2>VS Şampiyon Seçici</h2>
-    <div v-if="!teamsVisible">
-        <label for="championsPerTeam">Takım başına şampiyon sayısı:</label>
-        <input type="number" id="championsPerTeam" v-model.number="championsPerTeam" min="1">
-        <button class="button" @click="setChampionsPerTeam" :disabled="championsPerTeam <= 0">Ayarla</button>
-    </div>
-    <div v-else>
-        <div class="team-container">
-            <div>
-                <h3 class="team-header">1. Takım ({{ team1Members.length }}/{{ teamSize }}):</h3>
-                <button class="button" @click="getRandomChampion('team1')" :disabled="team1Members.length >= teamSize">Rastgele Şampiyon Ekle</button>
-                <ul class="champion-list">
-                    <li v-for="champion in team1Members" :key="champion">
-                        <img :src="getImagePath(champion)" :alt="champion" class="champion-image" @load="championImageLoaded" />
-                    </li>
-                </ul>
-            </div>
-            <div>
-                <h3 class="team-header">2. Takım ({{ team2Members.length }}/{{ teamSize }}):</h3>
-                <button class="button" @click="getRandomChampion('team2')" :disabled="team2Members.length >= teamSize">Rastgele Şampiyon Ekle</button>
-                <ul class="champion-list">
-                    <li v-for="champion in team2Members" :key="champion">
-                        <img :src="getImagePath(champion)" :alt="champion" class="champion-image" @load="championImageLoaded" />
-                    </li>
-                </ul>
-            </div>
+    <div id="app" class="container">
+        <h2>VS Şampiyon Seçici</h2>
+        <div v-if="!teamsVisible">
+            <label for="championsPerTeam">Takım başına şampiyon sayısı:</label>
+            <input type="number" id="championsPerTeam" v-model.number="championsPerTeam" min="1">
+            <button class="button" @click="setChampionsPerTeam" :disabled="championsPerTeam <= 0">Ayarla</button>
         </div>
-        <button v-if="teamsVisible" class="button" @click="resetSelections">Resetle</button>
+        <div v-else>
+            <div class="team-container">
+                <div>
+                    <h3 class="team-header">1. Takım ({{ team1Members.length }}/{{ teamSize }}):</h3>
+                    <button class="button" @click="getRandomChampion('team1')"
+                        :disabled="team1Members.length >= teamSize">Rastgele Şampiyon Ekle</button>
+                    <ul class="champion-list">
+                        <li v-for="champion in team1Members" :key="champion">
+                            <img :src="getImagePath(champion)" :alt="champion" class="champion-image"
+                                @load="championImageLoaded" />
+                        </li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="team-header">2. Takım ({{ team2Members.length }}/{{ teamSize }}):</h3>
+                    <button class="button" @click="getRandomChampion('team2')"
+                        :disabled="team2Members.length >= teamSize">Rastgele Şampiyon Ekle</button>
+                    <ul class="champion-list">
+                        <li v-for="champion in team2Members" :key="champion">
+                            <img :src="getImagePath(champion)" :alt="champion" class="champion-image"
+                                @load="championImageLoaded" />
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <button v-if="teamsVisible" class="button" @click="resetSelections">Resetle</button>
+        </div>
     </div>
-</div>
 
-<script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.3.2/socket.io.js"></script>
-<script>
-    const socket = io();
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.3.2/socket.io.js"></script>
+    <script>
+        const socket = io();
 
-    new Vue({
-        el: '#app',
-        data: {
-            championsPerTeam: 0,
-            teamSize: 0,
-            team1Members: [],
-            team2Members: [],
-            teamsVisible: false
-        },
-        methods: {
-            setChampionsPerTeam() {
-                socket.emit('setChampionsPerTeam', this.championsPerTeam);
+        new Vue({
+            el: '#app',
+            data: {
+                championsPerTeam: 0,
+                teamSize: 0,
+                team1Members: [],
+                team2Members: [],
+                teamsVisible: false
             },
-            getRandomChampion(team) {
-                socket.emit('getRandomChampion', team);
+            methods: {
+                setChampionsPerTeam() {
+                    socket.emit('setChampionsPerTeam', this.championsPerTeam);
+                },
+                getRandomChampion(team) {
+                    socket.emit('getRandomChampion', team);
+                },
+                resetSelections() {
+                    socket.emit('resetSelections');
+                    this.teamsVisible = false; // Hide team selection
+                    this.championsPerTeam = 0; // Reset team size
+                },
+                getImagePath(champion) {
+                    return `img/${encodeURIComponent(champion)}.png`;
+                },
+                championImageLoaded(event) {
+                    event.target.classList.add('loaded');
+                }
             },
-            resetSelections() {
-                socket.emit('resetSelections');
-                this.teamsVisible = false; // Hide team selection
-                this.championsPerTeam = 0; // Reset team size
-            },
-            getImagePath(champion) {
-                return `img/${encodeURIComponent(champion)}.png`;
-            },
-            championImageLoaded(event) {
-                event.target.classList.add('loaded');
-            }
-        },
-        mounted() {
-            socket.on('randomChampion', ({ champion, team1Members, team2Members }) => {
-                if (champion !== null) {
+            mounted() {
+                socket.on('randomChampion', ({ champion, team1Members, team2Members }) => {
+                    if (champion !== null) {
+                        this.team1Members = team1Members;
+                        this.team2Members = team2Members;
+                    }
+                });
+
+                socket.on('selectionsReset', () => {
+                    this.team1Members = [];
+                    this.team2Members = [];
+                    this.teamsVisible = false;
+                });
+
+                socket.on('teamsVisible', (teamSize) => {
+                    if (teamSize > 0) {
+                        this.teamsVisible = true;
+                        this.teamSize = teamSize;
+                        // Request picked champions from the server
+                        socket.emit('getPickedChampions');
+                    } else {
+                        this.teamsVisible = false;
+                    }
+                });
+
+                // Receive picked champions from the server
+                socket.on('pickedChampions', ({ team1Members, team2Members }) => {
                     this.team1Members = team1Members;
                     this.team2Members = team2Members;
-                }
-            });
+                });
 
-            socket.on('selectionsReset', () => {
-                this.team1Members = [];
-                this.team2Members = [];
-                this.teamsVisible = false;
-            });
-
-            socket.on('teamsVisible', (teamSize) => {
-                if (teamSize > 0) {
-                    this.teamsVisible = true;
-                    this.teamSize = teamSize;
-                    // Request picked champions from the server
-                    socket.emit('getPickedChampions');
-                } else {
-                    this.teamsVisible = false;
-                }
-            });
-
-            // Receive picked champions from the server
-            socket.on('pickedChampions', ({ team1Members, team2Members }) => {
-                this.team1Members = team1Members;
-                this.team2Members = team2Members;
-            });
-
-            // Check if team size is already set
-            socket.emit('checkTeamSize');
-            socket.on('teamSize', (teamSize) => {
-                if (teamSize > 0) {
-                    this.teamsVisible = true;
-                    this.teamSize = teamSize;
-                    // Request picked champions from the server
-                    socket.emit('getPickedChampions');
-                } else {
-                    this.teamsVisible = false;
-                }
-            });
-        }
-    });
-</script>
+                // Check if team size is already set
+                socket.emit('checkTeamSize');
+                socket.on('teamSize', (teamSize) => {
+                    if (teamSize > 0) {
+                        this.teamsVisible = true;
+                        this.teamSize = teamSize;
+                        // Request picked champions from the server
+                        socket.emit('getPickedChampions');
+                    } else {
+                        this.teamsVisible = false;
+                    }
+                });
+            }
+        });
+    </script>
 </body>
+
 </html>
