@@ -38,19 +38,19 @@ npm run dev
 
 ## 🖼️ Champion Images
 
-> [!IMPORTANT]
-> **Missing Champion Images**: The following new champions need their portrait images downloaded manually:
-> - Ambessa.png
-> - Aurora.png
-> - Mel.png
-> - Yunara.png (if officially released)
-> - Zaheen.png (if officially released)
->
-> **How to add images:**
-> 1. Download champion icons from Riot's Data Dragon: `https://ddragon.leagueoflegends.com/cdn/[version]/img/champion/[ChampionName].png`
-> 2. Get latest version from: `https://ddragon.leagueoflegends.com/api/versions.json`
-> 3. Save as 50x50px PNG files in `public/img/` directory
-> 4. Use exact champion name (e.g., `Aurora.png`, `Ambessa.png`, `Mel.png`)
+All champion portrait images are sourced from **[Community Dragon](https://www.communitydragon.org/)**, a community-driven CDN for League of Legends assets.
+
+**Latest Champions (2024-2026):**
+- ✅ Ambessa (ID: 799)
+- ✅ Aurora (ID: 893)
+- ✅ Mel (ID: 800)
+- ✅ Yunara (ID: 804)
+- ✅ Zaheen (ID: 950)
+
+**Download URL Format:**
+```
+https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-icons/{championId}.png
+```
 
 ## 🛠️ Technologies
 
@@ -71,6 +71,11 @@ npm run dev
 ## 🤝 Contributing
 
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
+
+## 🙏 Credits
+
+- **Champion Images**: [Community Dragon](https://www.communitydragon.org/) - Community-driven CDN for LoL assets
+- **Game Data**: League of Legends® and all related content © Riot Games, Inc.
 
 ## 📄 License
 
