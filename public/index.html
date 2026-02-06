@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Team Size Selection</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fa;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .container {
+            max-width: 600px;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            transition: all 1s cubic-bezier(0.165, 0.84, 0.44, 1);
+        }
+
+        h2 {
+            font-size: 24px;
+            text-align: center;
+            margin-bottom: 20px;
+            color: #333;
+            transition: all 1s cubic-bezier(0.165, 0.84, 0.44, 1);
+        }
+
+        label {
+            font-size: 18px;
+            margin-bottom: 10px;
+            display: block;
+            color: #555;
+            transition: all 1s cubic-bezier(0.165, 0.84, 0.44, 1);
+        }
+
+        input[type="number"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+            margin-bottom: 20px;
+            box-sizing: border-box;
+            transition: all 1s cubic-bezier(0.165, 0.84, 0.44, 1);
+        }
+
+        .team-container {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            transition: all 1s cubic-bezier(0.165, 0.84, 0.44, 1);
+        }
+
+        .team-container > div {
+            width: calc(50% - 10px);
+            transition: all 1s cubic-bezier(0.165, 0.84, 0.44, 1);
+        }
+
+        .team-header {
+            font-size: 18px;
+            margin-bottom: 10px;
+            color: #555;
+            transition: all 1s cubic-bezier(0.165, 0.84, 0.44, 1);
+        }
+
+        .button {
+            padding: 12px 20px;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            width: 100%;
+            display: block;
+            margin-top: 10px;
+            opacity: 1;
+        }
+
+        .button:hover {
+            background-color: #0056b3;
+            transform: scale(1.1);
+        }
+
+        .button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
+        .champion-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: flex-start;
+            transition: all 1s cubic-bezier(0.165, 0.84, 0.44, 1);
+        }
+
+        .champion-list li {
+            margin-right: 5px;
+            margin-bottom: 5px;
+            transition: all 1s cubic-bezier(0.165, 0.84, 0.44, 1);
+        }
+
+        .champion-image {
+            max-width: 50px;
+            max-height: 50px;
+            margin-right: 5px;
+            border-radius: 5px;
+            opacity: 0;
+            transition: opacity 1s cubic-bezier(0.165, 0.84, 0.44, 1), transform 1s cubic-bezier(0.165, 0.84, 0.44, 1);
+        }
+
+        .champion-image.loaded {
+            opacity: 1;
+        }
+
+    </style>
+</head>
+<body>
+<div id="app" class="container">
+    <h2>VS Şampiyon Seçici</h2>
+    <div v-if="!teamsVisible">
+        <label for="championsPerTeam">Takım başına şampiyon sayısı:</label>
+        <input type="number" id="championsPerTeam" v-model.number="championsPerTeam" min="1">
+        <button class="button" @click="setChampionsPerTeam" :disabled="championsPerTeam <= 0">Ayarla</button>
+    </div>
+    <div v-else>
+        <div class="team-container">
+            <div>
+                <h3 class="team-header">1. Takım ({{ team1Members.length }}/{{ teamSize }}):</h3>
+                <button class="button" @click="getRandomChampion('team1')" :disabled="team1Members.length >= teamSize">Rastgele Şampiyon Ekle</button>
+                <ul class="champion-list">
+                    <li v-for="champion in team1Members" :key="champion">
+                        <img :src="getImagePath(champion)" :alt="champion" class="champion-image" @load="championImageLoaded" />
+                    </li>
+                </ul>
+            </div>
+            <div>
+                <h3 class="team-header">2. Takım ({{ team2Members.length }}/{{ teamSize }}):</h3>
+                <button class="button" @click="getRandomChampion('team2')" :disabled="team2Members.length >= teamSize">Rastgele Şampiyon Ekle</button>
+                <ul class="champion-list">
+                    <li v-for="champion in team2Members" :key="champion">
+                        <img :src="getImagePath(champion)" :alt="champion" class="champion-image" @load="championImageLoaded" />
+                    </li>
+                </ul>
+            </div>
+        </div>
+        <button v-if="teamsVisible" class="button" @click="resetSelections">Resetle</button>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.3.2/socket.io.js"></script>
+<script>
+    const socket = io();
+
+    new Vue({
+        el: '#app',
+        data: {
+            championsPerTeam: 0,
+            teamSize: 0,
+            team1Members: [],
+            team2Members: [],
+            teamsVisible: false
+        },
+        methods: {
+            setChampionsPerTeam() {
+                socket.emit('setChampionsPerTeam', this.championsPerTeam);
+            },
+            getRandomChampion(team) {
+                socket.emit('getRandomChampion', team);
+            },
+            resetSelections() {
+                socket.emit('resetSelections');
+                this.teamsVisible = false; // Hide team selection
+                this.championsPerTeam = 0; // Reset team size
+            },
+            getImagePath(champion) {
+                return `img/${encodeURIComponent(champion)}.png`;
+            },
+            championImageLoaded(event) {
+                event.target.classList.add('loaded');
+            }
+        },
+        mounted() {
+            socket.on('randomChampion', ({ champion, team1Members, team2Members }) => {
+                if (champion !== null) {
+                    this.team1Members = team1Members;
+                    this.team2Members = team2Members;
+                }
+            });
+
+            socket.on('selectionsReset', () => {
+                this.team1Members = [];
+                this.team2Members = [];
+                this.teamsVisible = false;
+            });
+
+            socket.on('teamsVisible', (teamSize) => {
+                if (teamSize > 0) {
+                    this.teamsVisible = true;
+                    this.teamSize = teamSize;
+                    // Request picked champions from the server
+                    socket.emit('getPickedChampions');
+                } else {
+                    this.teamsVisible = false;
+                }
+            });
+
+            // Receive picked champions from the server
+            socket.on('pickedChampions', ({ team1Members, team2Members }) => {
+                this.team1Members = team1Members;
+                this.team2Members = team2Members;
+            });
+
+            // Check if team size is already set
+            socket.emit('checkTeamSize');
+            socket.on('teamSize', (teamSize) => {
+                if (teamSize > 0) {
+                    this.teamsVisible = true;
+                    this.teamSize = teamSize;
+                    // Request picked champions from the server
+                    socket.emit('getPickedChampions');
+                } else {
+                    this.teamsVisible = false;
+                }
+            });
+        }
+    });
+</script>
+</body>
+</html>
